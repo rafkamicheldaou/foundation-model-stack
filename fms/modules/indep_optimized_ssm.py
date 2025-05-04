@@ -95,6 +95,50 @@ class RMSNormGated(nn.Module):
 
         return self.weight * hidden_states.to(input_dtype)
 
+# SSMCacheUnit not used by this module, kept for consistency
+class SSMCacheUnit:
+    def __init__(
+        self,
+        emb_dim: int,
+        nheads: int,
+        head_dim: int,
+        conv_kernel,
+        expand: float,
+        n_groups: int,
+        state_size: int,
+        batch_size: int,
+        dtype: torch.dtype,
+        device: Optional[str] = None,
+    ):
+        self.seqlen_offset = 0
+        self.dtype = dtype
+        self.conv_kernel_size = conv_kernel
+        self.intermediate_size = int(expand * emb_dim)
+        self.has_previous_state = False
+
+        self.conv_state = torch.zeros(
+            batch_size,
+            self.intermediate_size + 2 * n_groups * state_size,
+            self.conv_kernel_size,
+            device=device,
+            dtype=dtype,
+        )
+        self.ssm_state = torch.zeros(
+            batch_size, nheads, head_dim, state_size, device=device, dtype=dtype
+        )
+
+    def update_conv_state(
+        self, new_conv_state: torch.Tensor, cache_position: torch.Tensor
+    ):
+        conv_state = self.conv_state
+        cache_position = cache_position.clamp(0, self.conv_kernel_size - 1)
+
+        conv_state = conv_state.roll(shifts=-1, dims=-1)
+        conv_state[:, :, cache_position] = new_conv_state.to(conv_state.device)
+        self.conv_state.zero_()
+        self.conv_state += conv_state
+        return self.conv_state
+
 
 def apply_mask_to_padding_states(hidden_states, attention_mask):
     """
