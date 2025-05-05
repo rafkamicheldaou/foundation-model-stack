@@ -291,16 +291,20 @@ class SSM(nn.Module):
         A_cum    = prefix_sum(A_perm) #TRITON here        
         L_tri    = torch.exp(segment_sum(A_perm))
 
-        G  = (C[:, :, :, None] * B[:, :, None]).sum(-1)      # [B,C,L,L,H]
-        M  = G * L_tri.permute(0, 2, 3, 4, 1)
+        G_intermediate = (
+                C[:, :, :, None, :, :] * B[:, :, None, :, :, :]
+            )  # shape: (b, c, l, s, h, n)
+        G = G_intermediate.sum(dim=-1)  # shape: (b, c, l, s, h)
+        M  = G * L_tri.permute(0, 2, 3, 4, 1)[..., None]
+        M = M.sum(dim=-1)
         Yd = (M[..., None] * H[:, :, None]).sum(3)
 
-        decay  = torch.exp(A_cum[:, :, :, -1:] - A_cum)
+        decay  = torch.exp((A_cum[:, :, :, -1:] - A_cum))
         B_dec  = B * decay.permute(0, -2, -1, 1)[..., None]
         state  = (B_dec[..., None, :] * H[..., None]).sum(2)
 
         Sd_out = torch.exp(A_cum)
-        CofS   = C[..., None] * state[:, :, None]
+        CofS   = C[..., None, :] * states[:, :, None, ...]
         Yoff   = CofS.sum(-1) * Sd_out.permute(0, 2, 3, 1)[..., None]
 
         y = Yd + Yoff                                 # [B,C,L,H,D]
