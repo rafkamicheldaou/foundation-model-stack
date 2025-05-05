@@ -2,6 +2,7 @@ from typing import Optional
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from fms.utils.activation import str_to_activation
 
@@ -286,7 +287,7 @@ class SSM(nn.Module):
             for t in (H, A, B, C)
         ]
 
-        A_perm   = A.permute(0, 3, 1, 2).contiguous()              # [B,H,C,L]
+        A_perm   = A.permute(0, 3, 1, 2)              # [B,H,C,L]
         A_cum    = prefix_sum(A_perm) #TRITON here        
         L_tri    = torch.exp(segment_sum(A_perm))
 
