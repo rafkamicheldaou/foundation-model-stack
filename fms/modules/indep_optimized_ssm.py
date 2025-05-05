@@ -2,9 +2,35 @@ from typing import Optional
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 from fms.utils.activation import str_to_activation
+
+import triton
+import triton.language as tl
+import math
+
+@triton.jit
+def _scan_kernel(X, CUM, N, BLOCK: tl.constexpr):
+    pid  = tl.program_id(0)           # row id  (B*H*C)
+    base = pid * N
+    idx  = tl.arange(0, BLOCK)
+    mask = idx < N
+    offs = base + idx
+    x    = tl.load(X + offs, mask=mask, other=0.)
+    ps   = tl.cumsum(x, axis=0)
+    tl.store(CUM + offs, ps, mask=mask)
+
+def prefix_sum(a):
+    if not a.is_contiguous():
+        a = a.contiguous()
+    N     = a.shape[-1]
+    rows  = a.numel() // N
+    BLOCK = 1 << (int(math.log2(N - 1)) + 1)
+    out   = torch.empty_like(a)
+    _scan_kernel[(rows,)](a.reshape(-1),
+                          out.reshape(-1),
+                          N, BLOCK, num_warps=4)
+    return out                     # (B, H, C, L)
 
 
 def pad_tensor_by_size(input_tensor: torch.Tensor, pad_size: int):
@@ -76,7 +102,7 @@ def segment_sum(input_tensor):
     )
     tensor_segsum = tensor_segsum.masked_fill(~mask, -torch.inf)
     return tensor_segsum
-    
+
 
 class RMSNormGated(nn.Module):
     def __init__(self, emb_dim, eps=1e-6):
@@ -95,7 +121,7 @@ class RMSNormGated(nn.Module):
 
         return self.weight * hidden_states.to(input_dtype)
 
-# SSMCacheUnit not used by this module, kept for consistency
+# SSMCacheUnit is not used by this SSM module, kept for consistency
 class SSMCacheUnit:
     def __init__(
         self,
@@ -174,9 +200,11 @@ class SSM(nn.Module):
         chunk_size: int,
     ):
         super().__init__()
+
         self.nheads            = nheads
         self.emb_dim           = emb_dim
         self.ssm_state_size    = state_size
+        self.conv_kernel_size  = conv_kernel
         self.intermediate_size = int(expand * emb_dim)
         self.n_groups          = n_groups
         self.head_dim          = head_dim
@@ -193,8 +221,8 @@ class SSM(nn.Module):
             bias        = use_conv_bias,
         )
 
-        proj_sz      = self.intermediate_size + self.conv_dim + nheads
-        self.in_proj = nn.Linear(emb_dim, proj_sz, bias=use_bias)
+        proj_size    = self.intermediate_size + self.conv_dim + nheads
+        self.in_proj = nn.Linear(emb_dim, proj_size, bias=use_bias)
 
         self.dt_bias = nn.Parameter(torch.ones(nheads))
         self.A_log   = nn.Parameter(torch.log(torch.arange(1, nheads + 1)))
@@ -213,22 +241,22 @@ class SSM(nn.Module):
         cache_position: Optional[torch.Tensor] = None,
         **kwargs,
     ):
-        bsz, seq_len, _ = input_states.shape
+        batch_size, seq_len, _ = input_states.shape
 
-        # gated MLP projection
-        input_states = apply_mask_to_padding_states(input_states, mask)
-        proj         = self.in_proj(input_states)
+        # 1. Gated MLP projection
+        input_states   = apply_mask_to_padding_states(input_states, mask)
+        proj           = self.in_proj(input_states)
         gate, h_BC, dt = proj.split(
             [self.intermediate_size, self.conv_dim, self.nheads], dim=-1
         )
 
-        # convolution
+        # 2. Depth‑wise convolution
         h_BC = self.act(
             self.conv1d(h_BC.transpose(1, 2))[..., :seq_len].transpose(1, 2)
         )
-        h_BC = apply_mask_to_padding_states(h_BC, mask)
 
-        # split into hidden / B / C
+        # 3. split into hidden / B / C
+        h_BC = apply_mask_to_padding_states(h_BC, mask)
         hidden, B, C = torch.split(
             h_BC,
             [self.intermediate_size,
@@ -237,66 +265,48 @@ class SSM(nn.Module):
             dim=-1,
         )
 
-        # intra‑chunk SSM
-        A   = -torch.exp(self.A_log.float())                  # [H]
-        dt2 = F.softplus(dt + self.dt_bias).clamp(*self.time_step_limit)
+        # 4. intra‑chunk SSM (no cross‑chunk recurrence)
+        A  = -torch.exp(self.A_log.float())                # [H]
+        dt = F.softplus(dt + self.dt_bias).clamp(*self.time_step_limit)
 
+        H   = hidden.reshape(batch_size, seq_len, -1, self.head_dim).float()
+        B   = B.reshape(batch_size, seq_len, -1, self.ssm_state_size).float()
+        C   = C.reshape(batch_size, seq_len, -1, self.ssm_state_size).float()
+        B   = B.repeat(1, 1, self.nheads // self.n_groups, 1)
+        C   = C.repeat(1, 1, self.nheads // self.n_groups, 1)
 
-        hid_raw  = hidden.reshape(bsz, seq_len, self.nheads, self.head_dim)
+        pad = (self.chunk_size - seq_len % self.chunk_size) % self.chunk_size
+        D_resid = self.D[:, None] * pad_tensor_by_size(H, pad)
 
-        # padding once
-        pad   = (self.chunk_size - seq_len % self.chunk_size) % self.chunk_size
-        total = seq_len + pad
-        n_c   = total // self.chunk_size
+        H = H * dt[..., None]
+        A = A.to(H.dtype) * dt
 
-        # D‑residual uses unscaled activations
-        hid_raw_pad = pad_tensor_by_size(hid_raw, pad)
-        D_res       = hid_raw_pad * self.D.view(1, 1, self.nheads, 1)
+        H, A, B, C = [
+            reshape_into_chunks(t, pad, self.chunk_size)
+            for t in (H, A, B, C)
+        ]
 
-        # all SSM maths use scaled activations
-        hid_scaled      = hid_raw * dt2[..., None]
-        hid_scaled_pad  = pad_tensor_by_size(hid_scaled, pad)
-        hid_c = hid_scaled_pad.view(bsz, n_c, self.chunk_size, self.nheads, self.head_dim)
+        A_perm   = A.permute(0, 3, 1, 2).contiguous()              # [B,H,C,L]
+        A_cum    = prefix_sum(A_perm) #TRITON here        
+        L_tri    = torch.exp(segment_sum(A_perm))
 
-        # B & C repeat + pad + chunk
-        rep   = self.nheads // self.n_groups
-        B_pad = pad_tensor_by_size(
-            B.reshape(bsz, seq_len, -1, self.ssm_state_size).repeat(1,1,rep,1), pad)
-        C_pad = pad_tensor_by_size(
-            C.reshape(bsz, seq_len, -1, self.ssm_state_size).repeat(1,1,rep,1), pad)
-        B_c = B_pad.view(bsz, n_c, self.chunk_size, self.nheads, self.ssm_state_size)
-        C_c = C_pad.view(bsz, n_c, self.chunk_size, self.nheads, self.ssm_state_size)
+        G  = (C[:, :, :, None] * B[:, :, None]).sum(-1)      # [B,C,L,L,H]
+        M  = G * L_tri.permute(0, 2, 3, 4, 1)
+        Yd = (M[..., None] * H[:, :, None]).sum(3)
 
-        # A scaled by dt, then pad+chunk
-        A_seq   = (A.to(hid_scaled_pad.dtype) * dt2).view(bsz, seq_len, self.nheads)
-        A_pad   = pad_tensor_by_size(A_seq, pad)
-        A_c_raw = A_pad.view(bsz, n_c, self.chunk_size, self.nheads).permute(0, 3, 1, 2)
-        A_cum   = torch.cumsum(A_c_raw, dim=-1)
-
-        # lower‑tri exp‑sum
-        L = torch.exp(segment_sum(A_c_raw))
-
-        # Y_diag
-        G  = (C_c[:, :, :, None] * B_c[:, :, None]).sum(-1)
-        M  = G * L.permute(0, 2, 3, 4, 1)
-        Yd = (M[..., None] * hid_c[:, :, None]).sum(3)
-
-        # local states
         decay  = torch.exp(A_cum[..., -1:] - A_cum)
-        B_dec  = B_c * decay.permute(0, -2, -1, 1)[..., None]
-        state  = (B_dec[..., None] * hid_c[..., None]).sum(2)
+        B_dec  = B * decay.permute(0, 2, 3, 1)[..., None]
+        state  = (B_dec[..., None] * H[..., None]).sum(2)
 
-        # off‑diag
         Sd_out = torch.exp(A_cum)
-        CofS   = C_c[..., None] * state[:, :, None]
+        CofS   = C[..., None] * state[:, :, None]
         Yoff   = CofS.sum(-1) * Sd_out.permute(0, 2, 3, 1)[..., None]
 
-        # combine
-        y = Yd + Yoff + D_res.view(bsz, n_c, self.chunk_size, self.nheads, self.head_dim)
-        y = y.view(bsz, total, self.nheads, self.head_dim)
-        if pad:
+        y = Yd + Yoff                                 # [B,C,L,H,D]
+        y = y.reshape(batch_size, -1, self.nheads, self.head_dim) + D_resid
+        if pad:                                       # strip pad
             y = y[:, :seq_len]
-        y = y.reshape(bsz, seq_len, -1)
+        y = y.reshape(batch_size, seq_len, -1)
 
-        # Final projection and output
+        # 5. RMSNorm + output proj
         return self.out_proj(self.norm(y, gate)), None
