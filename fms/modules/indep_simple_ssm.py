@@ -5,6 +5,33 @@ import torch.nn as nn
 
 from fms.utils.activation import str_to_activation
 
+import triton
+import triton.language as tl
+import math
+
+@triton.jit
+def _scan_kernel(X, CUM, N, BLOCK: tl.constexpr):
+    pid  = tl.program_id(0)           # row id  (B*H*C)
+    base = pid * N
+    idx  = tl.arange(0, BLOCK)
+    mask = idx < N
+    offs = base + idx
+    x    = tl.load(X + offs, mask=mask, other=0.)
+    ps   = tl.cumsum(x, axis=0)
+    tl.store(CUM + offs, ps, mask=mask)
+
+def prefix_sum(a):
+    if not a.is_contiguous():
+        a = a.contiguous()
+    N     = a.shape[-1]
+    rows  = a.numel() // N
+    BLOCK = 1 << (int(math.log2(N - 1)) + 1)
+    out   = torch.empty_like(a)
+    _scan_kernel[(rows,)](a.reshape(-1),
+                          out.reshape(-1),
+                          N, BLOCK, num_warps=4)
+    return out                     # (B, H, C, L)
+
 
 def pad_tensor_by_size(input_tensor: torch.Tensor, pad_size: int):
     """
@@ -259,8 +286,8 @@ class SSM(nn.Module):
             for t in (H, A, B, C)
         ]
 
-        A_perm   = A.permute(0, 3, 1, 2)              # [B,H,C,L]
-        A_cum    = torch.cumsum(A_perm, dim=-1)
+        A_perm   = A.permute(0, 3, 1, 2).contiguous()              # [B,H,C,L]
+        A_cum    = prefix_sum(A_perm) #TRITON here        
         L_tri    = torch.exp(segment_sum(A_perm))
 
         G  = (C[:, :, :, None] * B[:, :, None]).sum(-1)      # [B,C,L,L,H]
