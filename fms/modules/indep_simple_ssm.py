@@ -206,7 +206,14 @@ class SSM(nn.Module):
 
         self.time_step_limit = (0.0, float("inf"))
 
-    def forward(self, input_states, mask):
+    def forward(
+        self,
+        input_states,
+        mask,
+        past_key_value_state: Optional[SSMCacheUnit] = None,
+        cache_position: Optional[torch.Tensor] = None,
+        **kwargs,
+    ):
         batch_size, seq_len, _ = input_states.shape
 
         # 1. Gated MLP projection
@@ -275,4 +282,4 @@ class SSM(nn.Module):
         y = y.reshape(batch_size, seq_len, -1)
 
         # 5. RMSNorm + output proj
-        return self.out_proj(self.norm(y, gate))
+        return self.out_proj(self.norm(y, gate)), None
