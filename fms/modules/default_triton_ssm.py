@@ -206,7 +206,7 @@ class SSM(nn.Module):
         head_dim: int,
         chunk_size: int,
     ):
-        super(SSM, self).__init__()
+        super().__init__()
         self.nheads = nheads
         self.emb_dim = emb_dim
         self.ssm_state_size = state_size
