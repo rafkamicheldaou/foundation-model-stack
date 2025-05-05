@@ -34,10 +34,6 @@ def prefix_sum(a):
     return out                     # (B, H, C, L)
 
 
-
-# HELPER FUNCTIONS
-
-
 def pad_tensor_by_size(input_tensor: torch.Tensor, pad_size: int):
     """
     Padding x tensor with `pad_size` on the seq_len dim (dim=1)
@@ -435,11 +431,8 @@ class SSM(nn.Module):
             # [bsz, -1, chunk_size, num_heads] -> [bsz, num_heads, -1, chunk_size]
             A = A.permute(0, 3, 1, 2).contiguous()
             A_cumsum = prefix_sum(A)                    # fast Triton scan
-            L = torch.exp(segment_sum(A))
-
             # 1. Compute the output for each intra-chunk (diagonal blocks)
-            # This is the analog of a causal mask
-            #L = torch.exp(segment_sum(A))
+            L = torch.exp(segment_sum(A))
 
             # Contraction of C and B to get G (attention-weights like)
             G_intermediate = (
