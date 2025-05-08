@@ -1,6 +1,13 @@
-# Foundation Model Stack
+# Divide, Tritron, Conquer (Indepdently) Exploring Chunked Sates in Bamba
+# Team Members: Rafka Daou, Maria Garmonina, Sarah Korb
 
-Foundation Model Stack is a collection of components for development, inference, training, and tuning of foundation models leveraging PyTorch native components. For inference optimizations we aim to support PyTorch compile, accelerated transformers, and tensor parallelism. At training time we aim to support FSDP, accelerated transformers, and PyTorch compile. To enable these optimizations, we will provide reimplementations of several popular model architectures starting with Llama and GPT-BigCode. 
+The goal of this project is to explore how to reduce memory costs and improve throughput in the current Bamba implementation by modifying the model’s chunking mechanism for processing input sequences.
+
+We evaluated Bamba’s Structured State-Space Model (SSM) performance by varying:
+
+Chunking strategies (default vs. optimized)
+Inference settings (use_cache=True vs. False)
+Model depth (reduced layers for profiling vs. full depth for accuracy) 
 
 ## Models Supported
 | Model family | Inference | Tuning and Training |
