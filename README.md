@@ -19,14 +19,14 @@ We evaluated Bamba’s Structured State-Space Model (SSM) performance by varying
 #### Approach
 ![image](https://github.com/user-attachments/assets/beedd1ca-9235-40d0-bc9a-df47f21d1cf8)
 
-#### Inference latency
+#### Experimental Evaluation: Latency/Throughput/ Memory Usage
+![image](https://github.com/user-attachments/assets/61458f48-bb41-4afa-996f-0af9f25af8f0)
 
-| Model | # GPUs | Median latency (ms) |
-| ----- | ----------- | ----- |
-| 7B | 1 | 14ms |
-| 13B | 1 | 22ms |
-| 70B | 8 | 30ms |
+![image](https://github.com/user-attachments/assets/53d742bf-a1d6-4d17-8d63-6199b6a2c0c4)
 
+![image](https://github.com/user-attachments/assets/09e4a29e-92e4-4b2b-8f89-d8bd16433d9a)
+
+![image](https://github.com/user-attachments/assets/463dde6b-bdc6-49a0-acc5-e2b8afb48161)
 
 ## Structure and contents of this Repository
 
