@@ -25,6 +25,18 @@ def pad_tensor_by_size(input_tensor: torch.Tensor, pad_size: int):
 
     return torch.nn.functional.pad(input_tensor, pad_shape, mode="constant", value=0)
 
+def pad_last_but_one(tensor: torch.Tensor, target_dim: int) -> torch.Tensor:
+    """
+    Pads the second-to-last dimension of the tensor (i.e., dim=-2) to `target_dim`.
+    """
+    current = tensor.shape[-2]
+    if current >= target_dim:
+        return tensor  # No padding needed
+
+    pad_amount = target_dim - current
+    pad = [0, 0] * (tensor.dim() - 2) + [0, pad_amount]  # pad second-to-last dim
+    return torch.nn.functional.pad(tensor, pad, value=0)
+
 
 def reshape_into_chunks(input_tensor, pad_size, chunk_size):
     """
