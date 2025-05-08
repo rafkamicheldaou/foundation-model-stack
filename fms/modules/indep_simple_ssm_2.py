@@ -26,15 +26,21 @@ def pad_tensor_by_size(input_tensor: torch.Tensor, pad_size: int):
     return torch.nn.functional.pad(input_tensor, pad_shape, mode="constant", value=0)
 
 def pad_last_but_one(tensor: torch.Tensor, target_dim: int) -> torch.Tensor:
-    """
-    Pads the second-to-last dimension of the tensor (i.e., dim=-2) to `target_dim`.
-    """
     current = tensor.shape[-2]
+    print("  Current size (dim -2):", current)
+
     if current >= target_dim:
-        return tensor  # No padding needed
+        return tensor
 
     pad_amount = target_dim - current
-    pad = [0, 0] * (tensor.dim() - 2) + [0, pad_amount]  # pad second-to-last dim
+    print("  Padding needed:", pad_amount)
+
+    pad = [0, 0] * tensor.dim()
+    dim_to_pad = tensor.dim() - 2  # second to last dimension
+    reverse_index = 2 * (tensor.dim() - 1 - dim_to_pad)
+    pad[reverse_index + 1] = pad_amount  # pad at the end of that dimension
+
+    print("  Final pad list:", pad)
     return torch.nn.functional.pad(tensor, pad, value=0)
 
 
