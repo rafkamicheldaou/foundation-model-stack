@@ -6,6 +6,11 @@ import torch.nn as nn
 from fms.utils.activation import str_to_activation
 
 
+# Enable verbose logging for torch._dynamo
+torch._dynamo.config.verbose = True
+torch._dynamo.config.log_level = logging.DEBUG
+
+
 def pad_tensor_by_size(input_tensor: torch.Tensor, pad_size: int):
     """
     Padding x tensor with `pad_size` on the seq_len dim (dim=1)
@@ -286,23 +291,18 @@ class SSM(nn.Module):
         B_dec = B_chunks * decay.permute(0, 2, 3, 1)[..., None]
 
         # --- Patch begins here ---
+        print("Before padding:")
+        print("  B_dec.shape:", B_dec.shape)
+        print("  H_chunks.shape:", H_chunks.shape)
+        
         if B_dec.shape[-2] != H_chunks.shape[-2]:
-            print(f"[DEBUG] B_dec shape before padding: {B_dec.shape}")
-            print(f"[DEBUG] H_chunks shape before padding: {H_chunks.shape}")
             target_dim = max(B_dec.shape[-2], H_chunks.shape[-2])
-
-            def pad_to(tensor, dim, size):
-                pad_amt = size - tensor.shape[dim]
-                if pad_amt > 0:
-                    pad = [0, 0] * (tensor.dim() - dim - 1) + [0, pad_amt]
-                    return F.pad(tensor, pad, value=0)
-                return tensor
-
-            B_dec = pad_to(B_dec, -2, target_dim)
-            H_chunks = pad_to(H_chunks, -2, target_dim)
-            print(f"[DEBUG] B_dec shape after padding: {B_dec.shape}")
-            print(f"[DEBUG] H_chunks shape after padding: {H_chunks.shape}")
-
+            B_dec = pad_last_but_one(B_dec, target_dim)
+            H_chunks = pad_last_but_one(H_chunks, target_dim)
+        
+        print("After padding:")
+        print("  B_dec.shape:", B_dec.shape)
+        print("  H_chunks.shape:", H_chunks.shape)
         # --- Patch ends here ---
 
         state = (B_dec[..., None] * H_chunks[..., None]).sum(2)
