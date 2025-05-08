@@ -61,7 +61,10 @@ In addition to evaluating various module architectures, we ran a series of exper
   
 * `fms/modules/indep_ssm.py` - Module removes inter-chunk recurrence by eliminating state caching and cross-chunk dependencies. This enables parallel processing across chunks and reduces latency.
 
-* `fms/modules/default_optimized_ssm.py` - Module implements the standard SSM module with architectural optimizations to reduce runtime bottlenecks. This version preserves the original autoregressive behavior while significantly improving performance through low-level memory and kernel tuning. 
+* `fms/modules/default_optimized_ssm.py` - Module implements the standard SSM module with architectural optimizations to reduce runtime bottlenecks. This version preserves the original autoregressive behavior while significantly improving performance through low-level memory and kernel tuning.
+  
+* Other files are copies of IBM’s ibm-fms repo and are required to define and load the Bamba model with the correct dependencies.
+
   
 ## Wandb Project Board: 
  
