@@ -301,8 +301,8 @@ class SSM(nn.Module):
         
         if B_dec.shape[-2] != H_chunks.shape[-2]:
             target_dim = max(B_dec.shape[-2], H_chunks.shape[-2])
-            B_dec = pad_dim_minus2(B_dec, target_dim)
-            H_chunks = pad_dim_minus2(H_chunks, target_dim)
+            B_dec = pad_dim_minus1(B_dec, target_dim)
+            H_chunks = pad_dim_minus1(H_chunks, target_dim)
         
         print("After padding:")
         print("  B_dec.shape:", B_dec.shape)
