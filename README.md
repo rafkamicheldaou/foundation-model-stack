@@ -24,8 +24,9 @@ We evaluated Bamba’s Structured State-Space Model (SSM) performance by varying
 
 ![image](https://github.com/user-attachments/assets/53d742bf-a1d6-4d17-8d63-6199b6a2c0c4)
 
-![image](https://github.com/user-attachments/assets/09e4a29e-92e4-4b2b-8f89-d8bd16433d9a)
+When evaluating accuracy, the Bamba-9B default model produced a wider and lower-scoring distribution, while our default optimized version, achieved higher GPTScores with less variance. This is likely caused by the numerical stability introduced by the Triton kernel when performing low level operations. 
 
+![image](https://github.com/user-attachments/assets/09e4a29e-92e4-4b2b-8f89-d8bd16433d9a)
 
 In addition to evaluating accuracy and various model architecture, we ran a series of experiments focused specifically on compiler-level speedups. Rather than changing the model itself, we used different modes and options within torch.compile. The configuration that delivered the best results combined max-autotune with epilogue_fusion, achieving an average latency of 11.88 seconds and throughput of 8.4 tokens per second. Max-autotunes is designed to search for the most efficient kernel implementation, while epilogue_fusion reduces GPU overhead by fusing post-processing steps into a single kernel. 
 
