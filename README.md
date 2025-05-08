@@ -9,38 +9,12 @@ We evaluated Bamba’s Structured State-Space Model (SSM) performance by varying
 - Inference settings (use_cache=True vs. False)
 - Model depth (reduced layers for profiling vs. full depth for accuracy) 
 
-## Models Supported
-| Model family | Inference | Tuning and Training |
+## Outline for Running Bamba-9B Benchmarks: 
+| Benchmark Type | # Layers | Use_Cache |
 |--------------| ---------- | ------------------ |
-| LLaMA        | :heavy_check_mark: | :heavy_check_mark: |
-| GPT-BigCode  | :heavy_check_mark: | :x: |
-| RoBERTa      | :heavy_check_mark: | :x: |
+| Accuracy        | 32 | True |
+|Performance  | 4 | False |
 
-
-## Installation
-
-We recommend running this on Python 3.11 and CUDA 12.1 for best performance, as the CPU overheads of the models are reduced significantly.
-
-### Pypi
-
-```
-pip install ibm-fms
-```
-
-### Local
-
-Requires [PyTorch >= 2.1](https://pytorch.org/get-started/locally/).
-
-```
-pip install -e .
-```
-or
-```
-python setup.py install
-```
-
-
-## Inference
 
 #### Approach
 Our approach for inference optimization is to use PyTorch compile, accelerated transformers, and tensor parallelism. PyTorch compile compiles the code into optimized kernels, accelerated transformers leverages `scaled_dot_product_attention` (SDPA) for accelerating attention computation while saving memory, and tensor parallelism is necessary for larger models.
@@ -110,21 +84,3 @@ See options in the script for other ways to train and tune.
 * `fms/training/` - Pre-training and fine-tuning code.
 * `fms/utils/` - Other operators useful in working with LLMs. These include a `generate()` function, `Tensor` subclasses, code for dealing with LLM checkpoints that might be saved/sharded in a variety of formats, tokenization code, and various other useful helper functions.
 * `scripts/` - Various scripts for inference, benchmarking, and evaluation, as well as an entry-point for tuning/training.
-
-## Extensions and Use Cases
-
-This library is used by [three](https://github.com/foundation-model-stack/foundation-model-stack/network/dependents) dependent projects at IBM.
-
-* [fms-fsdp](https://github.com/foundation-model-stack/fms-fsdp) - This repo shares training code that has been used to pretrain an fms implementation of LLaMA on IBM internal data.
-* [fms-extras](https://github.com/foundation-model-stack/fms-extras) - This repo shares code for additional fms-based models trained by IBM. This repo will also be a home for other extensions, and may also include research or in-developent work intended for eventual upstreaming to fms.
-* [TGIS](https://github.com/IBM/text-generation-inference) - This inference server includes support for serving fms models.
-
-## Open Issues
-
-* https://github.com/pytorch/pytorch/issues/107824 prevents training/finetuning from working with `torch.compile`.
-* In addition, there are several open issues we are tracking to improve stability and memory footprint of inference
-  
-## References
-
-* Huggingface TGI: https://github.com/huggingface/text-generation-inference
-* IBM TGIS: https://github.com/IBM/text-generation-inference
