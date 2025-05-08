@@ -27,7 +27,7 @@ The triton-optimzied implementation constantly achieves lower latency and higher
 
 The Triton-optimzied implementation reduces peak memory usage compared to the defualt, especially at lower chunks. It also achieves more stable and memory efficient memory bandwith over increasing chunk sizes. Meanwhile, the independent chunking variant slightly increases memory load but there is an evident tradeoff between reuse and parallelism.
 
-![image](https://github.com/user-attachments/assets/53d742bf-a1d6-4d17-8d63-6199b6a2c0c4)
+![memory_usage](https://github.com/user-attachments/assets/7f78f55d-7466-45bd-83f8-de5595752d76)
 
 When evaluating accuracy, the Bamba-9B default model produced a wider and lower-scoring distribution, while our default optimized version, achieved higher GPTScores with less variance. This is likely caused by the numerical stability introduced by the Triton kernel when performing low level operations. 
 
