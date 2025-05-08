@@ -23,7 +23,7 @@ We evaluated Bamba’s Structured State-Space Model (SSM) performance by varying
 
 The triton-optimzied implementation constantly achieves lower latency and higher throughput compared to the baseline. This improvement is due to reduced kernel overhead, coalesced memory access and efficient fusion of operations. The independent chunking variant reduces latency by removing interdependencies. 
 
-![image](https://github.com/user-attachments/assets/61458f48-bb41-4afa-996f-0af9f25af8f0)
+<img src="assets/image_050825_0346PM.jpg" width="800"/>
 
 The Triton-optimzied implementation reduces peak memory usage compared to the defualt, especially at lower chunks. It also achieves more stable and memory efficient memory bandwith over increasing chunk sizes. Meanwhile, the independent chunking variant slightly increases memory load but there is an evident tradeoff between reuse and parallelism.
 
