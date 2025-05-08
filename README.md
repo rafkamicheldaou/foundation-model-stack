@@ -33,7 +33,12 @@ We evaluated Bamba’s Structured State-Space Model (SSM) performance by varying
 
 * `GPT_Score` Colab notebook to evaluate the accuracy of our model outputs. This notebook uses GPTScore, a metric that computes the negative log-likelihood of a generated output given a reference — effectively measuring how fluent, coherent, and relevant the model's responses are. The notebook loads our model outputs and references, computes the GPTScore, and then visualizes the results through plots such as average and harmonic mean scores across different chunking strategies.
 
-* `fms/modulues/indep_ssm.py` - 
-* `fms/modulues/default_optimized_ssm.py` -
+* `Cluster Folder` -  This contains all the code that was run on the insomnnia cluster to benchmark accuracy and performance including our bash scripts.
+  
+* `fms/modulues/indep_ssm.py` - Module removes inter-chunk recurrence by eliminating state caching and cross chunk dependencies. This enables parallel processing across chunks and reduces latency. 
+* `fms/modulues/default_optimized_ssm.py` - Module implements the standard SSM with architectural optimizations to reduce runtime bottlenecks. This version preserves the original autoregressive behavior while significantly improving performance through low-level memory and kernel tuning. 
+  
+## Wandb Project Board: 
+ 
 
   
