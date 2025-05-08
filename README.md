@@ -17,22 +17,33 @@ We evaluated Bamba’s performance by varying:
 |Performance  | 4 | False |
 
 
-#### Approach
+## Approach
 ![Experimental Flow](assets/experimental_flow.png)
 
-#### Experimental Evaluation: Latency / Throughput / Memory Usage
+## Experimental Evaluation
+
+#### Latency and Throughput
 
 The Triton-optimized implementation constantly achieves lower latency and higher throughput compared to the baseline. This improvement is due to reduced kernel overhead, coalesced memory access, and efficient fusion of operations. The independent chunking variant reduces latency by removing interdependencies. 
 
 ![Latency and Throughput](https://github.com/user-attachments/assets/7f78f55d-7466-45bd-83f8-de5595752d76)
 
+
+#### Memory Bandwidth
+
 Both default optimized and independent variants reach higher memory bandwidth than the baseline, with the independent variant achieving the greatest bandwidth - reflecting decreased state-reuse overhead and increased parallelism.
 
 ![Memory Bandwidth](assets/memory_usage.png)
 
+
+#### Accuracy
+
 Default model produced a wider and lower-scoring distribution, while our default-optimized version achieved higher GPTScores with less variance, showing that low-level optimizations can lead to better output quality due to numerical stability.
 
 ![Accuracy](assets/accuracy.png)
+
+
+#### Compiler-level Optimizations
 
 In addition to evaluating various module architectures, we ran a series of experiments focused specifically on compiler-level speedups. Rather than changing the model itself, we used different modes and options within `torch.compile`. The configuration that delivered the best results combined `max_autotune` with `epilogue_fusion`, achieving an average latency of 11.88 seconds and throughput of 8.4 tokens per second. `Max_autotune` is designed to search for the most efficient kernel implementation, while `epilogue_fusion` reduces GPU overhead by fusing post-processing steps into a single kernel. 
 
