@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 
 from fms.utils.activation import str_to_activation
-
+import torch.nn.functional as F 
 
 # All the helper functions are identical to ssm.py (Default SSM Module)
 def pad_tensor_by_size(input_tensor: torch.Tensor, pad_size: int):
