@@ -25,24 +25,15 @@ def pad_tensor_by_size(input_tensor: torch.Tensor, pad_size: int):
 
     return torch.nn.functional.pad(input_tensor, pad_shape, mode="constant", value=0)
 
-def pad_last_but_one(tensor: torch.Tensor, target_dim: int) -> torch.Tensor:
-    current = tensor.shape[-2]
-    print("  Current size (dim -2):", current)
+def pad_dim_minus2(x: torch.Tensor, target_dim: int) -> torch.Tensor:
+    current_size = x.size(-2)
+    if current_size >= target_dim:
+        return x  # no padding needed
 
-    if current >= target_dim:
-        return tensor
-
-    pad_amount = target_dim - current
-    print("  Padding needed:", pad_amount)
-
-    pad = [0, 0] * tensor.dim()
-    dim_to_pad = tensor.dim() - 2  # second to last dimension
-    reverse_index = 2 * (tensor.dim() - 1 - dim_to_pad)
-    pad[reverse_index + 1] = pad_amount  # pad at the end of that dimension
-
-    print("  Final pad list:", pad)
-    return torch.nn.functional.pad(tensor, pad, value=0)
-
+    pad_amount = target_dim - current_size
+    pad = [0, 0] * x.dim()
+    pad[2] = pad_amount  # pad at the end of dim=-2
+    return F.pad(x, pad)
 
 def reshape_into_chunks(input_tensor, pad_size, chunk_size):
     """
@@ -315,8 +306,8 @@ class SSM(nn.Module):
         
         if B_dec.shape[-2] != H_chunks.shape[-2]:
             target_dim = max(B_dec.shape[-2], H_chunks.shape[-2])
-            B_dec = pad_last_but_one(B_dec, target_dim)
-            H_chunks = pad_last_but_one(H_chunks, target_dim)
+            B_dec = pad_dim_minus2(B_dec, target_dim)
+            H_chunks = pad_dim_minus2(H_chunks, target_dim)
         
         print("After padding:")
         print("  B_dec.shape:", B_dec.shape)
