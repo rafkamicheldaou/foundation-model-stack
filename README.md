@@ -9,12 +9,21 @@ We evaluated Bamba’s Structured State-Space Model (SSM) performance by varying
 - Inference settings (use_cache=True vs. False)
 - Model depth (reduced layers for profiling vs. full depth for accuracy) 
 
+This GitHub repository includes a Colab notebook titled HPML_Final, which contains:
+
+Initialization of the Bamba model architecture
+Benchmarking code for both performance and accuracy The notebook is designed to run sequentially — each cell is arranged in the order of execution. You can open and run it in Google Colab with no additional setup.
+It is important to choose the right model configuration depending on your evaluation goal.
+
 ## Outline for Running Bamba-9B Benchmarks: 
 | Benchmark Type | # Layers | Use_Cache |
 |--------------| ---------- | ------------------ |
 | Accuracy        | 32 | True |
 |Performance  | 4 | False |
 
+At the end of the notebook, we include benchmarking code that logs and visualizes key performance metrics, allowing for direct comparison across different configurations.
+
+We also created a separate notebook titled gpt_score to evaluate the accuracy of our model outputs. This notebook uses GPTScore, a metric that computes the negative log-likelihood of a generated output given a reference — effectively measuring how fluent, coherent, and relevant the model's responses are. The notebook loads our model outputs and references, computes the GPTScore, and then visualizes the results through plots such as average and harmonic mean scores across different chunking strategies.
 
 #### Approach
 Our approach for inference optimization is to use PyTorch compile, accelerated transformers, and tensor parallelism. PyTorch compile compiles the code into optimized kernels, accelerated transformers leverages `scaled_dot_product_attention` (SDPA) for accelerating attention computation while saving memory, and tensor parallelism is necessary for larger models.
