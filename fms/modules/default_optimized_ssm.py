@@ -10,30 +10,44 @@ import torch.nn.functional as F
 
 from fms.utils.activation import str_to_activation
 
+
+# NEW: Custom Triton kernel to replace torch.cumsum()
 @triton.jit
 def _scan_kernel(X, CUM, N, BLOCK: tl.constexpr):
-    pid  = tl.program_id(0)           # row id  (B*H*C)
-    base = pid * N
-    idx  = tl.arange(0, BLOCK)
-    mask = idx < N
+    """
+    Inclusive prefix‐sum per row.
+    X   : Flattened input tensor of shape (rows * N,)
+    CUM : Flattened output tensor, same shape as X
+    N   : Number of elements per row
+    BLOCK: Compile‐time block size (power‐of‐two ≥ N)
+    """
+    pid  = tl.program_id(0)         # Row id that this instance is processing
+    base = pid * N                  # Starting index of this row in the flattened array
+    idx  = tl.arange(0, BLOCK)      # Thread-local indices within the block
+    mask = idx < N                  # Masking any threads beyond the row length
     offs = base + idx
-    x    = tl.load(X + offs, mask=mask, other=0.)
-    ps   = tl.cumsum(x, axis=0)
-    tl.store(CUM + offs, ps, mask=mask)
+    x    = tl.load(X + offs, mask=mask, other=0.)    # Load inputs, apply the mask
+    ps   = tl.cumsum(x, axis=0)                      # Perform the cumulative sum
+    tl.store(CUM + offs, ps, mask=mask)              # Store results back to CUM
 
+# Wrapper function for the Triton kernel above
 def prefix_sum(a):
+    """
+    Compute prefix sums over the last dimension of a tensor.
+    """
     if not a.is_contiguous():
         a = a.contiguous()
-    N     = a.shape[-1]
-    rows  = a.numel() // N
-    BLOCK = 1 << (int(math.log2(N - 1)) + 1)
-    out   = torch.empty_like(a)
-    _scan_kernel[(rows,)](a.reshape(-1),
+    N     = a.shape[-1]                              # Length of the dimension to scan over
+    rows  = a.numel() // N                           # Number of rows when we flatten everything (except the last dim)
+    BLOCK = 1 << (int(math.log2(N - 1)) + 1)         # BLOCK is a power of 2 (to simplify scanning and increase parallelization)
+    out   = torch.empty_like(a)                      # Output is of the same dimension as a.contiguous()
+    _scan_kernel[(rows,)](a.reshape(-1),             # Launch one program per row, with 4 warps
                           out.reshape(-1),
                           N, BLOCK, num_warps=4)
-    return out                     # (B, H, C, L)
+    return out
 
 
+# Other helper functions are identical to ssm.py (Default SSM Module)
 def pad_tensor_by_size(input_tensor: torch.Tensor, pad_size: int):
     """
     Padding x tensor with `pad_size` on the seq_len dim (dim=1)
@@ -184,8 +198,7 @@ def apply_mask_to_padding_states(hidden_states, attention_mask):
     return hidden_states
 
 
-
-
+# Default Optimized SSM Module: same as Default, but with the custom Triton kernel replacing torch.cumsum()
 class SSM(nn.Module):
     def __init__(
         self,
@@ -429,8 +442,10 @@ class SSM(nn.Module):
             ]
 
             # [bsz, -1, chunk_size, num_heads] -> [bsz, num_heads, -1, chunk_size]
+            # Make A contiguous for the Triton kernel
             A = A.permute(0, 3, 1, 2).contiguous()
-            A_cumsum = prefix_sum(A)                    # fast Triton scan
+            # Use the custom prefix_sum() instead of torch.cumsum()
+            A_cumsum = prefix_sum(A)
             # 1. Compute the output for each intra-chunk (diagonal blocks)
             L = torch.exp(segment_sum(A))
 
