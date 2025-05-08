@@ -20,14 +20,14 @@ def pad_tensor_by_size(input_tensor: torch.Tensor, pad_size: int):
 
     return torch.nn.functional.pad(input_tensor, pad_shape, mode="constant", value=0)
 
-def pad_dim_minus2(x: torch.Tensor, target_dim: int) -> torch.Tensor:
-    current_size = x.size(-2)
+def pad_dim_minus1(x: torch.Tensor, target_dim: int) -> torch.Tensor:
+    current_size = x.size(-1)
     if current_size >= target_dim:
         return x  # no padding needed
 
     pad_amount = target_dim - current_size
     pad = [0, 0] * x.dim()
-    pad[2] = pad_amount  # pad at the end of dim=-2
+    pad[1] = pad_amount 
     return F.pad(x, pad)
 
 def reshape_into_chunks(input_tensor, pad_size, chunk_size):
