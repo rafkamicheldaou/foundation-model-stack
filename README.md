@@ -1,4 +1,4 @@
-![Latency_throughput](https://github.com/user-attachments/assets/7f78f55d-7466-45bd-83f8-de5595752d76)# Divide, Tritron, Conquer (Indepdently) Exploring Chunked Sates in Bamba
+# Divide, Tritron, Conquer (Indepdently) Exploring Chunked Sates in Bamba
 Team Members: Rafka Daou, Maria Garmonina, Sarah Korb
 
 The goal of this project is to explore how to reduce memory costs and improve throughput in the current Bamba implementation by modifying the model’s chunking mechanism for processing input sequences.
@@ -23,8 +23,7 @@ We evaluated Bamba’s Structured State-Space Model (SSM) performance by varying
 
 The triton-optimzied implementation constantly achieves lower latency and higher throughput compared to the baseline. This improvement is due to reduced kernel overhead, coalesced memory access and efficient fusion of operations. The independent chunking variant reduces latency by removing interdependencies. 
 
-<img src="assets/Latency_throughput.jpg" width="800"/>
-
+![Latency_throughput](https://github.com/user-attachments/assets/7f78f55d-7466-45bd-83f8-de5595752d76)
 
 The Triton-optimzied implementation reduces peak memory usage compared to the defualt, especially at lower chunks. It also achieves more stable and memory efficient memory bandwith over increasing chunk sizes. Meanwhile, the independent chunking variant slightly increases memory load but there is an evident tradeoff between reuse and parallelism.
 
