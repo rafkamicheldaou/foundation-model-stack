@@ -287,6 +287,8 @@ class SSM(nn.Module):
 
         # --- Patch begins here ---
         if B_dec.shape[-2] != H_chunks.shape[-2]:
+            print(f"[DEBUG] B_dec shape before padding: {B_dec.shape}")
+            print(f"[DEBUG] H_chunks shape before padding: {H_chunks.shape}")
             target_dim = max(B_dec.shape[-2], H_chunks.shape[-2])
 
             def pad_to(tensor, dim, size):
@@ -298,6 +300,9 @@ class SSM(nn.Module):
 
             B_dec = pad_to(B_dec, -2, target_dim)
             H_chunks = pad_to(H_chunks, -2, target_dim)
+            print(f"[DEBUG] B_dec shape after padding: {B_dec.shape}")
+            print(f"[DEBUG] H_chunks shape after padding: {H_chunks.shape}")
+
         # --- Patch ends here ---
 
         state = (B_dec[..., None] * H_chunks[..., None]).sum(2)
