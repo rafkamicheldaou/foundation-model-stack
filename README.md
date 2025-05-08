@@ -42,16 +42,17 @@ In addition to evaluating accuracy and various model architecture, we ran a seri
 
 * `GPT_Score` Colab notebook to evaluate the accuracy of our model outputs. This notebook uses GPTScore, a metric that computes the negative log-likelihood of a generated output given a reference — effectively measuring how fluent, coherent, and relevant the model's responses are. The notebook loads our model outputs and references, computes the GPTScore, and then visualizes the results through plots such as average and harmonic mean scores across different chunking strategies.
 
-* `./cluster_scripts` -  This contains all the code that was run on the insomnnia cluster to benchmark accuracy and performance including our bash scripts.
+* `./cluster_scripts` -  This contains all the code that was run on the Insomnnia cluster to benchmark accuracy and performance including our bash scripts.
 
-* `./benchmarking_data` -  This contains a folder of data used to test benchmarking and accuracy. The data in this folder varies by token length 
+* `./benchmarking_data` -  This contains a folder of data used to test benchmarking and accuracy. The data in this folder varies by tokenized length of the prompts.
   
-* `fms/modulues/indep_ssm.py` - Module removes inter-chunk recurrence by eliminating state caching and cross chunk dependencies. This enables parallel processing across chunks and reduces latency. 
-* `fms/modulues/default_optimized_ssm.py` - Module implements the standard SSM with architectural optimizations to reduce runtime bottlenecks. This version preserves the original autoregressive behavior while significantly improving performance through low-level memory and kernel tuning. 
+* `fms/modulues/indep_ssm.py` - Module removes inter-chunk recurrence by eliminating state caching and cross-chunk dependencies. This enables parallel processing across chunks and reduces latency.
+
+* `fms/modulues/default_optimized_ssm.py` - Module implements the standard SSM module with architectural optimizations to reduce runtime bottlenecks. This version preserves the original autoregressive behavior while significantly improving performance through low-level memory and kernel tuning. 
   
 ## Wandb Project Board: 
  
 [Weights and Biases Project](https://wandb.ai/sbk2176-columbia-university/bamba_benchmarking_metric/workspace?nw=nwusersbk2176)
 
-> Contains default and default optimized runs on 20 prompts, measuring Latency/Throughput/ Memory Usage
+> Contains default and default optimized runs on 20 prompts, measuring Latency/Throughput/Memory Usage
   
