@@ -1,13 +1,13 @@
 # Divide, Tritron, Conquer (Indepdently) Exploring Chunked Sates in Bamba
-# Team Members: Rafka Daou, Maria Garmonina, Sarah Korb
+Team Members: Rafka Daou, Maria Garmonina, Sarah Korb
 
 The goal of this project is to explore how to reduce memory costs and improve throughput in the current Bamba implementation by modifying the model’s chunking mechanism for processing input sequences.
 
 We evaluated Bamba’s Structured State-Space Model (SSM) performance by varying:
 
-Chunking strategies (default vs. optimized)
-Inference settings (use_cache=True vs. False)
-Model depth (reduced layers for profiling vs. full depth for accuracy) 
+- Chunking strategies (default vs. optimized)
+- Inference settings (use_cache=True vs. False)
+- Model depth (reduced layers for profiling vs. full depth for accuracy) 
 
 ## Models Supported
 | Model family | Inference | Tuning and Training |
