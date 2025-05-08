@@ -18,21 +18,6 @@ We evaluated Bamba’s Structured State-Space Model (SSM) performance by varying
 
 #### Approach
 ![image](https://github.com/user-attachments/assets/beedd1ca-9235-40d0-bc9a-df47f21d1cf8)
-Experimental Setup:
-- Model: Bamba-9B using default and modified SSM variants. 
-- Accuracy Evaluation: Used 32 layers to assess full model capacity
-- Performance Benchmarking: Used a 4-layer version with varying prompt lengths to expose differences in hardware efficiency and reduce resource overhead
-SSM Variants evaluated:
-- Default 
-- Optimized Default
-- Simple Independent 
-- Optimized Independent
-Metrics Benchmarked:
-- Throughput: Measured in tokens per second using CUDA profiler.
-- Latency: Time to generate tokens per prompt (averaged across a batch). 
-- Peak Memory Usage and Bandwidth: Tracked using PyTorch Profiler.
-Accuracy Evaluation: Accuracy measured by comparing generated answers to reference answers.
-- Scoring Method: GPT-based semantic similarity score (via Hugging Face GPT model).
 
 #### Experimental Evaluation: Latency/Throughput/ Memory Usage
 ![image](https://github.com/user-attachments/assets/61458f48-bb41-4afa-996f-0af9f25af8f0)
