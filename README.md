@@ -17,7 +17,7 @@ We evaluated Bamba’s Structured State-Space Model (SSM) performance by varying
 
 
 #### Approach
-![image](https://github.com/user-attachments/assets/beedd1ca-9235-40d0-bc9a-df47f21d1cf8)
+![Experimental Flow](assets/experimental_flow.png)
 
 #### Experimental Evaluation: Latency/Throughput/ Memory Usage
 
