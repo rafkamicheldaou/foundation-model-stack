@@ -51,5 +51,5 @@ In addition to evaluating accuracy and various model architecture, we ran a seri
   
 ## Wandb Project Board: 
  
-
+[Weights and Biases Project](https://wandb.ai/sbk2176-columbia-university/bamba_benchmarking_metric/workspace?nw=nwusersbk2176)
   
