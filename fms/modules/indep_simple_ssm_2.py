@@ -6,11 +6,6 @@ import torch.nn as nn
 from fms.utils.activation import str_to_activation
 
 
-# Enable verbose logging for torch._dynamo
-torch._dynamo.config.verbose = True
-torch._dynamo.config.log_level = logging.DEBUG
-
-
 def pad_tensor_by_size(input_tensor: torch.Tensor, pad_size: int):
     """
     Padding x tensor with `pad_size` on the seq_len dim (dim=1)
