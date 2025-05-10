@@ -1,14 +1,26 @@
-# Divide, Triton, and Conquer 
+# HPML Project: Divide, Triton, and Conquer 
 ## Exploring Chunked States in Bamba
-Team Members: Rafka Daou, Maria Garmonina, Sarah Korb
+Team Members: Rafka Daou:rd311
+Maria Garmonina: mkg2169
+Sarah Korb: sbk2176
 
+## Problem Statement:
 The goal of this project is to explore how to reduce memory costs and improve throughput in the current Bamba implementation by modifying the model’s chunking mechanism for processing input sequences.
 
+## Model Description:
 We evaluated Bamba’s performance by varying:
-
 - Chunking strategies (default, default optimized, and independent)
 - Inference settings (use_cache=True vs. False)
-- Model depth (reduced layers for profiling vs. full depth for accuracy) 
+- Model depth (reduced layers for profiling vs. full depth for accuracy)
+
+Hardware Configuration:
+ - GPU: NVIDIA H100
+ - Cluster: IBM Insomnia- shared high memory compute node environment
+
+Software Stack:
+ - Framework: IBM Foundation Model Stack (FMS)
+ - Libraries: PyTorch, CUDA
+ - Profiling Tools: PyTorch Profiler
 
 ## Outline for Running Bamba-9B Benchmarks: 
 | Benchmark Type | # Layers | Use_Cache |
@@ -20,7 +32,7 @@ We evaluated Bamba’s performance by varying:
 ## Approach
 ![Experimental Flow](assets/experimental_flow.png)
 
-## Experimental Evaluation
+## Final Results Summary
 
 #### Latency and Throughput
 
