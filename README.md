@@ -1,8 +1,9 @@
 # HPML Project: Divide, Triton, and Conquer 
 ## Exploring Chunked States in Bamba
-Team Members: Rafka Daou:rd311
-Maria Garmonina: mkg2169
-Sarah Korb: sbk2176
+Team Members:
+- Rafka Daou: rd311
+- Maria Garmonina: mkg2169
+- Sarah Korb: sbk2176
 
 ## Problem Statement:
 The goal of this project is to explore how to reduce memory costs and improve throughput in the current Bamba implementation by modifying the model’s chunking mechanism for processing input sequences.
