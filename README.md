@@ -1,7 +1,7 @@
 # HPML Project: Divide, Triton, and Conquer 
 ## Exploring Chunked States in Bamba
 Team Members:
-- Rafka Daou: rd311
+- Rafka Daou: rd3111
 - Maria Garmonina: mkg2169
 - Sarah Korb: sbk2176
 
