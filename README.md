@@ -8,22 +8,22 @@ Team Members:
 ## Problem Statement:
 The goal of this project is to explore how to reduce memory costs and improve throughput in the current Bamba implementation by modifying the model’s chunking mechanism for processing input sequences.
 
-## Model Description:
+## Model and Setup:
 We evaluated Bamba’s performance by varying:
 - Chunking strategies (default, default optimized, and independent)
 - Inference settings (use_cache=True vs. False)
 - Model depth (reduced layers for profiling vs. full depth for accuracy)
 
 Hardware Configuration:
- - GPU: NVIDIA H100
- - Cluster: IBM Insomnia- shared high memory compute node environment
+ - GPU: NVIDIA H100 PCIe (Driver 550.54.14, CUDA 12.4)
+ - Cluster: Insomnia
 
 Software Stack:
  - Framework: IBM Foundation Model Stack (FMS)
  - Libraries: PyTorch, CUDA
  - Profiling Tools: PyTorch Profiler
 
-## Outline for Running Bamba-9B Benchmarks: 
+#### Outline for Running Bamba-9B Benchmarks: 
 | Benchmark Type | # Layers | Use_Cache |
 |--------------| ---------- | ------------------ |
 | Accuracy        | 32 | True |
