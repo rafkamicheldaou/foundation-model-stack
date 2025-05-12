@@ -62,7 +62,7 @@ In addition to evaluating various module architectures, we ran a series of exper
 
 ![Torch Compile](assets/torch_compile.png)
 
-## Structure and contents of this Repository
+## Structure and Contents of This Repository (Reproducibility Instructions)
 
 * `Benchmarking` Colab notebook that contains: Initialization of the Bamba model architecture, and benchmarking code for both performance and accuracy. The notebook is designed to run sequentially — each cell is arranged in the order of execution. You can open and run it in Google Colab with no additional setup.
 
